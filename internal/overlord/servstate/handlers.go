@@ -608,7 +608,7 @@ func (s *serviceData) stop() error {
 	case stateRunning:
 		logger.Debugf("Attempting to stop service %q by sending SIGTERM", s.config.Name)
 		// First send SIGTERM to try to terminate it gracefully.
-		err := syscall.Kill(-s.cmd.Process.Pid, syscall.SIGTERM)
+		err := syscall.Kill(s.cmd.Process.Pid, syscall.SIGTERM)
 		if err != nil {
 			logger.Noticef("Cannot send SIGTERM to process: %v", err)
 		}
@@ -735,7 +735,11 @@ func (s *serviceData) checkFailed(action plan.ServiceAction) {
 			case stateRunning:
 				logger.Noticef("Service %q %s action is %q, terminating process before restarting",
 					s.config.Name, onType, action)
-				err := syscall.Kill(-s.cmd.Process.Pid, syscall.SIGTERM)
+				/// XXX: [jam] this code does a KILL SIGTERM,
+				//	then calls terminateTimeElapsed which does
+				//	*another* SIGTERM before finally calling
+				//	SIGKILL, that doesn't seem quite right.
+				err := syscall.Kill(s.cmd.Process.Pid, syscall.SIGTERM)
 				if err != nil {
 					logger.Noticef("Cannot send SIGTERM to process: %v", err)
 				}
